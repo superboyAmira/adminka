@@ -15,8 +15,8 @@ func main() {
 
 	http.HandleFunc("/health", api.HealthCheck)
 
-	log.Println("Starting Chess Tournament API on :8085")
-	if err := http.ListenAndServe(":8085", nil); err != nil {
+	log.Println("Starting Chess Tournament API on :5000")
+	if err := http.ListenAndServe(":5000", nil); err != nil {
 		log.Fatalf("Error starting server: %s", err)
 	}
 }
