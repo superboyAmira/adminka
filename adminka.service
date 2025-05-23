@@ -1,0 +1,13 @@
+[Unit]
+Description=Chess Tournament API Service
+After=network.target
+
+[Service]
+Type=simple
+User=<имя вашего пользователя>
+ExecStart=/var/www/app/chess-api
+WorkingDirectory=/var/www/app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

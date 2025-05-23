@@ -35,23 +35,7 @@ app_build: make_deploy_dirs
 
 service_build: app_build
 	service_build: app_build
-	@sudo tee /etc/systemd/system/$(APP_NAME).service > /dev/null <<EOF
-[Unit]
-Description=Chess Tournament API Service
-After=network.target
-
-[Service]
-Type=simple
-User=$(USERNAME)
-ExecStart=$(DEPLOY_DIR)/$(APP_NAME)
-WorkingDirectory=$(DEPLOY_DIR)
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-
+	@sudo mv adminka.service /etc/systemd/system/$(APP_NAME).service
 service_start: service_build
 	sudo systemctl daemon-reload
 	sudo systemctl enable $(APP_NAME).service
@@ -60,21 +44,7 @@ service_start: service_build
 
 nginx_create: service_start
 	sudo apt install nginx -y
-	@sudo tee /etc/nginx/sites-available/$(APP_NAME) > /dev/null <<EOF
-server {
-    listen 80;
-    server_name _;
-
-    location / {
-        proxy_pass http://localhost:$(APP_PORT);
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOF
+	@sudo mv adminka /etc/nginx/sites-available/$(APP_NAME)
 	sudo ln -sf /etc/nginx/sites-available/$(APP_NAME) /etc/nginx/sites-enabled/$(APP_NAME)
 	sudo rm -f /etc/nginx/sites-enabled/default
 	sudo nginx -t
