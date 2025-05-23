@@ -13,13 +13,19 @@ go_install: update
 	sudo rm -rf /usr/local/go
 	sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
 	echo 'export PATH=$$PATH:/usr/local/go/bin' >> ~/.profile
-	source ~/.profile || true
+	export PATH=$$PATH:/usr/local/go/bin
 	go version || true
 
 git_install: go_install
 	sudo apt install git -y
 
 make_deploy_dirs: git_install
+	@if [ ! -d "$(APP_DIR)" ]; then \
+		mkdir -p $(APP_DIR); \
+		cd $(APP_DIR) && git clone $(REPO_URL) .; \
+	else \
+		echo "📁 $(APP_DIR) уже существует, пропускаем клонирование"; \
+	fi
 	mkdir -p $(APP_DIR)
 	cd $(APP_DIR) && git clone $(REPO_URL) .
 	sudo mkdir -p $(DEPLOY_DIR)
@@ -32,18 +38,18 @@ app_build: make_deploy_dirs
 
 service_build: app_build
 	echo "[Unit]
-Description=Chess Tournament API Service
-After=network.target
+	Description=Chess Tournament API Service
+	After=network.target
 
-[Service]
-Type=simple
-User=$(USERNAME)
-ExecStart=$(DEPLOY_DIR)/$(APP_NAME)
-WorkingDirectory=$(DEPLOY_DIR)
-Restart=on-failure
+	[Service]
+	Type=simple
+	User=$(USERNAME)
+	ExecStart=$(DEPLOY_DIR)/$(APP_NAME)
+	WorkingDirectory=$(DEPLOY_DIR)
+	Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target" | sudo tee /etc/systemd/system/$(APP_NAME).service
+	[Install]
+	WantedBy=multi-user.target" | sudo tee /etc/systemd/system/$(APP_NAME).service
 
 service_start: service_build
 	sudo systemctl daemon-reload
@@ -65,7 +71,7 @@ nginx_create: service_start
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
     }
-}" | sudo tee /etc/nginx/sites-available/$(APP_NAME)
+	}" | sudo tee /etc/nginx/sites-available/$(APP_NAME)
 
 	sudo ln -sf /etc/nginx/sites-available/$(APP_NAME) /etc/nginx/sites-enabled/$(APP_NAME)
 	sudo rm -f /etc/nginx/sites-enabled/default
