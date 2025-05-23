@@ -12,9 +12,9 @@ update:
 	sudo apt update && sudo apt upgrade -y
 
 go_install: update
-	wget https://go.dev/dl/go1.22.2.linux-amd64.tar.gz
+	wget https://go.dev/dl/go1.23.2.linux-amd64.tar.gz
 	sudo rm -rf /usr/local/go
-	sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
+	sudo tar -C /usr/local -xzf go1.23.2.linux-amd64.tar.gz
 	echo 'export PATH=$$PATH:/usr/local/go/bin' >> ~/.profile
 	export PATH=$$PATH:/usr/local/go/bin
 	go version || true
@@ -31,22 +31,26 @@ make_deploy_dirs: git_install
 
 app_build: make_deploy_dirs
 	cd $(REPO_DIR)/cmd/$(APP_NAME)/ && go build -o $(APP_NAME)
-	mv $(APP_DIR)/cmd/$(APP_NAME)/$(APP_NAME) $(DEPLOY_DIR)/
+	mv $(REPO_DIR)/cmd/$(APP_NAME)/$(APP_NAME) $(DEPLOY_DIR)/
 
 service_build: app_build
-	echo "[Unit]
-	Description=Chess Tournament API Service
-	After=network.target
+	service_build: app_build
+	@sudo tee /etc/systemd/system/$(APP_NAME).service > /dev/null <<EOF
+[Unit]
+Description=Chess Tournament API Service
+After=network.target
 
-	[Service]
-	Type=simple
-	User=$(USERNAME)
-	ExecStart=$(DEPLOY_DIR)/$(APP_NAME)
-	WorkingDirectory=$(DEPLOY_DIR)
-	Restart=on-failure
+[Service]
+Type=simple
+User=$(USERNAME)
+ExecStart=$(DEPLOY_DIR)/$(APP_NAME)
+WorkingDirectory=$(DEPLOY_DIR)
+Restart=on-failure
 
-	[Install]
-	WantedBy=multi-user.target" | sudo tee /etc/systemd/system/$(APP_NAME).service
+[Install]
+WantedBy=multi-user.target
+EOF
+
 
 service_start: service_build
 	sudo systemctl daemon-reload
@@ -56,7 +60,8 @@ service_start: service_build
 
 nginx_create: service_start
 	sudo apt install nginx -y
-	echo "server {
+	@sudo tee /etc/nginx/sites-available/$(APP_NAME) > /dev/null <<EOF
+server {
     listen 80;
     server_name _;
 
@@ -68,8 +73,8 @@ nginx_create: service_start
         proxy_set_header Host \$host;
         proxy_cache_bypass \$http_upgrade;
     }
-	}" | sudo tee /etc/nginx/sites-available/$(APP_NAME)
-
+}
+EOF
 	sudo ln -sf /etc/nginx/sites-available/$(APP_NAME) /etc/nginx/sites-enabled/$(APP_NAME)
 	sudo rm -f /etc/nginx/sites-enabled/default
 	sudo nginx -t
