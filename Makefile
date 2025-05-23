@@ -4,6 +4,9 @@ APP_PORT := 5000
 REPO_URL := https://github.com/superboyAmira/adminka
 APP_DIR := /home/$(USERNAME)/app
 DEPLOY_DIR := /var/www/app
+REPO_DIR := /home/$(USERNAME)/adminka
+
+# sed -i 's/^    /\t/' Makefile
 
 update:
 	sudo apt update && sudo apt upgrade -y
@@ -20,21 +23,15 @@ git_install: go_install
 	sudo apt install git -y
 
 make_deploy_dirs: git_install
-	@if [ ! -d "$(APP_DIR)" ]; then \
-		mkdir -p $(APP_DIR); \
-		cd $(APP_DIR) && git clone $(REPO_URL) .; \
-	else \
-		echo "📁 $(APP_DIR) уже существует, пропускаем клонирование"; \
-	fi
 	mkdir -p $(APP_DIR)
-	cd $(APP_DIR) && git clone $(REPO_URL) .
+	cd $(APP_DIR)
 	sudo mkdir -p $(DEPLOY_DIR)
 	sudo chown $(USERNAME):$(USERNAME) $(DEPLOY_DIR)
 	sudo chmod 755 $(DEPLOY_DIR)
 
 app_build: make_deploy_dirs
-	cd $(APP_DIR)/cmd && go build -o $(APP_NAME)
-	mv $(APP_DIR)/cmd/$(APP_NAME) $(DEPLOY_DIR)/
+	cd $(REPO_DIR)/cmd/$(APP_NAME)/ && go build -o $(APP_NAME)
+	mv $(APP_DIR)/cmd/$(APP_NAME)/$(APP_NAME) $(DEPLOY_DIR)/
 
 service_build: app_build
 	echo "[Unit]
