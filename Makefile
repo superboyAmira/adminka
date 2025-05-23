@@ -34,7 +34,7 @@ app_build: make_deploy_dirs
 	mv $(REPO_DIR)/cmd/$(APP_NAME)/$(APP_NAME) $(DEPLOY_DIR)/
 
 service_build: app_build
-	@sudo mv adminka.service /etc/systemd/system/$(APP_NAME).service
+	@sudo mv $(REPO_DIR)/adminka.service /etc/systemd/system/$(APP_NAME).service
 
 service_start: service_build
 	sudo systemctl daemon-reload
@@ -44,7 +44,7 @@ service_start: service_build
 
 nginx_create: service_start
 	sudo apt install nginx -y
-	@sudo mv adminka /etc/nginx/sites-available/$(APP_NAME)
+	@sudo mv $(REPO_DIR)/adminka /etc/nginx/sites-available/$(APP_NAME)
 	sudo ln -sf /etc/nginx/sites-available/$(APP_NAME) /etc/nginx/sites-enabled/$(APP_NAME)
 	sudo rm -f /etc/nginx/sites-enabled/default
 	sudo nginx -t
