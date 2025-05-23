@@ -40,7 +40,6 @@ service_start: service_build
 	sudo systemctl daemon-reload
 	sudo systemctl enable $(APP_NAME).service
 	sudo systemctl start $(APP_NAME).service
-	sudo systemctl status $(APP_NAME).service
 
 nginx_create: service_start
 	sudo apt install nginx -y
@@ -51,11 +50,22 @@ nginx_create: service_start
 	sudo systemctl restart nginx
 
 test:
+	hostname -I
+	sudo apt install -y jq
 	@echo "=== TEST: HealthCheck ==="
 	curl -s http://localhost/health | jq
 	@echo "=== TEST: Create Player ==="
 	curl -s -X POST http://localhost/players/create -H "Content-Type: application/json" -d '{"name":"Magnus","rating":2800}' | jq
 	@echo "=== TEST: List Players ==="
 	curl -s http://localhost/players | jq
+
+test_localka:
+	sudo apt install -y jq
+	@echo "=== TEST: HealthCheck ==="
+	curl -s http://<hostname + bridge>/health | jq
+	@echo "=== TEST: Create Player ==="
+	curl -s -X POST http://<hostname + bridge>/players/create -H "Content-Type: application/json" -d '{"name":"Magnus","rating":2800}' | jq
+	@echo "=== TEST: List Players ==="
+	curl -s http://<hostname + bridge>/players | jq
 
 all: nginx_create

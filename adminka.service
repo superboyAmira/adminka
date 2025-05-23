@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=<имя вашего пользователя>
-ExecStart=/var/www/app/chess-api
+User=superboy
+ExecStart=/var/www/app/adminka
 WorkingDirectory=/var/www/app
 Restart=on-failure
 
