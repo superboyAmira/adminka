@@ -11,7 +11,7 @@ REPO_DIR := /home/$(USERNAME)/adminka
 update:
 	sudo apt update && sudo apt upgrade -y
 
-go_install: update
+go_install: 
 	wget https://go.dev/dl/go1.23.2.linux-amd64.tar.gz
 	sudo rm -rf /usr/local/go
 	sudo tar -C /usr/local -xzf go1.23.2.linux-amd64.tar.gz
@@ -19,10 +19,10 @@ go_install: update
 	export PATH=$$PATH:/usr/local/go/bin
 	go version || true
 
-git_install: go_install
+git_install: 
 	sudo apt install git -y
 
-make_deploy_dirs: git_install
+make_deploy_dirs: 
 	mkdir -p $(APP_DIR)
 	cd $(APP_DIR)
 	sudo mkdir -p $(DEPLOY_DIR)
@@ -34,8 +34,8 @@ app_build: make_deploy_dirs
 	mv $(REPO_DIR)/cmd/$(APP_NAME)/$(APP_NAME) $(DEPLOY_DIR)/
 
 service_build: app_build
-	service_build: app_build
 	@sudo mv adminka.service /etc/systemd/system/$(APP_NAME).service
+
 service_start: service_build
 	sudo systemctl daemon-reload
 	sudo systemctl enable $(APP_NAME).service
